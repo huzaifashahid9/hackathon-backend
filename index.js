@@ -5,6 +5,10 @@ import cookieParser from "cookie-parser";
 import morgan from "morgan";
 
 import connectDB from "./src/config/db.js";
+import authRoutes from "./src/routes/authRoutes.js";
+import reportRoutes from "./src/routes/reportRoutes.js";
+import vitalsRoutes from "./src/routes/vitalsRoutes.js";
+import contactRoutes from "./src/routes/contactRoutes.js";
 
 const app = express();
 
@@ -35,8 +39,23 @@ if (NODE_ENV !== "test") {
 }
 
 app.get("/", (req, res) => {
-  res.json({ message: "Hackathon API running", version: "1.0" });
+  res.json({ 
+    message: "💚 HealthMate API - Sehat ka Smart Dost", 
+    version: "1.0",
+    endpoints: {
+      auth: "/api/auth",
+      reports: "/api/reports",
+      vitals: "/api/vitals",
+      contact: "/api/contact"
+    }
+  });
 });
+
+// API Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/vitals", vitalsRoutes);
+app.use("/api/contact", contactRoutes);
 
 // 404 handler
 app.use((req, res) => {
