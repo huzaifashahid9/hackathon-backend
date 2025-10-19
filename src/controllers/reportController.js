@@ -2,9 +2,6 @@ import Report from "../models/Report.js";
 import { uploadImage } from "../config/cloudinary.js";
 import { analyzeMedicalReport } from "../config/gemini.js";
 
-// @desc    Upload medical report
-// @route   POST /api/reports/upload
-// @access  Private
 export const uploadReport = async (req, res) => {
   try {
     if (!req.file) {
@@ -32,7 +29,6 @@ export const uploadReport = async (req, res) => {
       "healthmate/reports"
     );
 
-    // Create report document
     const report = await Report.create({
       userId: req.user.id,
       title,
@@ -47,8 +43,7 @@ export const uploadReport = async (req, res) => {
       isProcessed: false,
     });
 
-    // Process with Gemini AI in background (async)
-    processReportWithAI(report._id, req.file.buffer, req.file.mimetype, reportType);
+    processReportWithAI(report._id, uploadResult.url, reportType);
 
     res.status(201).json({
       success: true,
@@ -64,29 +59,57 @@ export const uploadReport = async (req, res) => {
   }
 };
 
-// Background AI processing
-const processReportWithAI = async (reportId, fileBuffer, mimeType, reportType) => {
+const processReportWithAI = async (reportId, fileUrl, reportType) => {
   try {
-    const aiAnalysis = await analyzeMedicalReport(fileBuffer, mimeType, reportType);
+    console.log(`\n🤖 Starting AI processing for report: ${reportId}`);
+    console.log(`📋 Report Type: ${reportType}`);
+    console.log(`� File URL: ${fileUrl}`);
+
+    const aiAnalysis = await analyzeMedicalReport(fileUrl, reportType);
 
     if (aiAnalysis.success) {
+      console.log(`✅ AI analysis successful for report: ${reportId}`);
+      console.log(
+        `📊 Summary length: ${
+          aiAnalysis.data.englishSummary?.length || 0
+        } chars`
+      );
+      console.log(
+        `🔢 Abnormal values found: ${
+          aiAnalysis.data.abnormalValues?.length || 0
+        }`
+      );
+
       await Report.findByIdAndUpdate(reportId, {
         aiSummary: aiAnalysis.data,
         isProcessed: true,
+        processingError: null,
+      });
+
+      console.log(`💾 Report ${reportId} updated successfully`);
+    } else {
+      console.log(
+        `⚠️ AI analysis returned success=false for report: ${reportId}`
+      );
+      await Report.findByIdAndUpdate(reportId, {
+        isProcessed: false,
+        processingError: "AI analysis completed but returned no data",
       });
     }
   } catch (error) {
-    console.error("AI processing error:", error);
+    console.error(
+      `❌ AI processing error for report ${reportId}:`,
+      error.message
+    );
+    console.error("Full error:", error);
+
     await Report.findByIdAndUpdate(reportId, {
       isProcessed: false,
-      processingError: error.message,
+      processingError: error.message || "Failed to analyze report with AI",
     });
   }
 };
 
-// @desc    Get all reports for logged in user
-// @route   GET /api/reports
-// @access  Private
 export const getReports = async (req, res) => {
   try {
     const { reportType, startDate, endDate, limit = 50, page = 1 } = req.query;
@@ -129,9 +152,6 @@ export const getReports = async (req, res) => {
   }
 };
 
-// @desc    Get single report
-// @route   GET /api/reports/:id
-// @access  Private
 export const getReportById = async (req, res) => {
   try {
     const report = await Report.findOne({
@@ -159,9 +179,6 @@ export const getReportById = async (req, res) => {
   }
 };
 
-// @desc    Update report notes
-// @route   PUT /api/reports/:id
-// @access  Private
 export const updateReport = async (req, res) => {
   try {
     const { title, notes, reportType, reportDate } = req.body;
@@ -198,9 +215,6 @@ export const updateReport = async (req, res) => {
   }
 };
 
-// @desc    Delete report
-// @route   DELETE /api/reports/:id
-// @access  Private
 export const deleteReport = async (req, res) => {
   try {
     const report = await Report.findOne({
@@ -233,9 +247,6 @@ export const deleteReport = async (req, res) => {
   }
 };
 
-// @desc    Get reports statistics
-// @route   GET /api/reports/stats
-// @access  Private
 export const getReportsStats = async (req, res) => {
   try {
     const totalReports = await Report.countDocuments({ userId: req.user.id });

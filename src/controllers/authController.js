@@ -1,15 +1,11 @@
 import User from "../models/User.js";
 import { sendTokenResponse } from "../middleware/auth.js";
 
-// @desc    Register user
-// @route   POST /api/auth/register
-// @access  Public
 export const register = async (req, res) => {
   try {
     const { name, email, password, phone, dateOfBirth, gender, bloodGroup } =
       req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -18,7 +14,6 @@ export const register = async (req, res) => {
       });
     }
 
-    // Create user
     const user = await User.create({
       name,
       email,
@@ -28,9 +23,6 @@ export const register = async (req, res) => {
       gender,
       bloodGroup,
     });
-
-    // Send welcome email (optional - you can enable this later)
-    // await sendWelcomeEmail(user.email, user.name);
 
     sendTokenResponse(user, 201, res);
   } catch (error) {
@@ -42,22 +34,16 @@ export const register = async (req, res) => {
   }
 };
 
-// @desc    Login user
-// @route   POST /api/auth/login
-// @access  Public
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate email & password
     if (!email || !password) {
       return res.status(400).json({
         success: false,
         message: "Please provide email and password",
       });
     }
-
-    // Check for user (include password for comparison)
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
@@ -66,8 +52,6 @@ export const login = async (req, res) => {
         message: "Invalid credentials",
       });
     }
-
-    // Check if password matches
     const isPasswordMatch = await user.comparePassword(password);
 
     if (!isPasswordMatch) {
@@ -77,7 +61,6 @@ export const login = async (req, res) => {
       });
     }
 
-    // Update last login
     user.lastLogin = new Date();
     await user.save();
 
@@ -91,9 +74,6 @@ export const login = async (req, res) => {
   }
 };
 
-// @desc    Logout user / clear cookie
-// @route   POST /api/auth/logout
-// @access  Private
 export const logout = async (req, res) => {
   try {
     res.cookie("token", "none", {
@@ -114,9 +94,6 @@ export const logout = async (req, res) => {
   }
 };
 
-// @desc    Get current logged in user
-// @route   GET /api/auth/me
-// @access  Private
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -134,9 +111,6 @@ export const getMe = async (req, res) => {
   }
 };
 
-// @desc    Update user profile
-// @route   PUT /api/auth/profile
-// @access  Private
 export const updateProfile = async (req, res) => {
   try {
     const fieldsToUpdate = {
@@ -170,9 +144,6 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-// @desc    Update password
-// @route   PUT /api/auth/update-password
-// @access  Private
 export const updatePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;

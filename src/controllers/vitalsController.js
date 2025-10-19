@@ -24,6 +24,7 @@ export const addVitals = async (req, res) => {
       });
     }
 
+    // Create vitals record
     const vitals = await ManualVitals.create({
       userId: req.user.id,
       recordDate,
@@ -38,10 +39,36 @@ export const addVitals = async (req, res) => {
       symptoms,
     });
 
+    // Run AI analysis and wait for it to complete
+    console.log("🤖 Starting AI analysis for vitals...");
+    try {
+      const aiResult = await generateVitalsInsights(vitals);
+      
+      if (aiResult.success) {
+        vitals.aiAnalysis = aiResult.data;
+        vitals.isAnalyzed = true;
+        await vitals.save();
+        console.log("✅ AI analysis completed and saved");
+      }
+    } catch (aiError) {
+      console.error("⚠️ AI analysis failed:", aiError.message);
+      // Don't fail the request if AI fails
+      vitals.aiAnalysis = {
+        englishSummary: "AI analysis is temporarily unavailable. Your vitals have been recorded successfully.",
+        romanUrduSummary: "AI analysis abhi available nahi hai. Aapki vitals record ho gayi hain.",
+        disclaimer: "This AI summary is for understanding only, not for medical advice. Always consult your doctor. / Yeh AI sirf samajhne ke liye hai, ilaaj ke liye nahi.",
+      };
+      vitals.isAnalyzed = false;
+      await vitals.save();
+    }
+
+    // Fetch the updated vitals with populated AI analysis
+    const updatedVitals = await ManualVitals.findById(vitals._id);
+
     res.status(201).json({
       success: true,
-      message: "Vitals added successfully",
-      vitals,
+      message: "Vitals added successfully with AI analysis",
+      vitals: updatedVitals,
     });
   } catch (error) {
     console.error("Add vitals error:", error);
@@ -203,12 +230,12 @@ export const getVitalsStats = async (req, res) => {
       userId: req.user.id,
     });
 
-    // Get latest vitals
+    
     const latestVital = await ManualVitals.findOne({ userId: req.user.id })
       .sort({ recordDate: -1 })
       .limit(1);
 
-    // Get vitals from last 30 days
+    
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -217,7 +244,7 @@ export const getVitalsStats = async (req, res) => {
       recordDate: { $gte: thirtyDaysAgo },
     }).sort({ recordDate: -1 });
 
-    // Calculate averages for last 30 days
+    
     const averages = calculateAverages(recentVitals);
 
     res.status(200).json({
@@ -263,11 +290,21 @@ export const getVitalsInsights = async (req, res) => {
       });
     }
 
+    console.log("🤖 Generating AI insights for vital:", vitalId || "latest");
     const insights = await generateVitalsInsights(vitalsData);
+
+    if (insights.success) {
+      // Save the AI analysis to the vital record
+      vitalsData.aiAnalysis = insights.data;
+      vitalsData.isAnalyzed = true;
+      await vitalsData.save();
+      console.log("✅ AI analysis saved to vital record");
+    }
 
     res.status(200).json({
       success: true,
       insights: insights.data,
+      vital: vitalsData,
     });
   } catch (error) {
     console.error("Get insights error:", error);

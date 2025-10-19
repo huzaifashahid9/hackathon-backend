@@ -112,16 +112,45 @@ const manualVitalsSchema = new mongoose.Schema(
         trim: true,
       },
     ],
+    aiAnalysis: {
+      englishSummary: {
+        type: String,
+        default: "",
+      },
+      romanUrduSummary: {
+        type: String,
+        default: "",
+      },
+      abnormalValues: [
+        {
+          parameter: String,
+          value: String,
+          normalRange: String,
+          status: String,
+        },
+      ],
+      doctorQuestions: [String],
+      foodsToAvoid: [String],
+      recommendedFoods: [String],
+      homeRemedies: [String],
+      disclaimer: {
+        type: String,
+        default:
+          "This AI summary is for understanding only, not for medical advice. Always consult your doctor. / Yeh AI sirf samajhne ke liye hai, ilaaj ke liye nahi.",
+      },
+    },
+    isAnalyzed: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-// Index for faster queries
 manualVitalsSchema.index({ userId: 1, recordDate: -1 });
 
-// Calculate BMI if height and weight are available
 manualVitalsSchema.virtual("bmi").get(function () {
   if (this.weight?.value && this.height?.value) {
     const heightInMeters = this.height.value / 100;
@@ -130,7 +159,6 @@ manualVitalsSchema.virtual("bmi").get(function () {
   return null;
 });
 
-// Enable virtuals in JSON
 manualVitalsSchema.set("toJSON", { virtuals: true });
 manualVitalsSchema.set("toObject", { virtuals: true });
 

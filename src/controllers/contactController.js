@@ -1,14 +1,10 @@
 import Contact from "../models/Contact.js";
 import { sendEmail } from "../config/email.js";
 
-// @desc    Submit contact form
-// @route   POST /api/contact
-// @access  Public
 export const submitContactForm = async (req, res) => {
   try {
     const { name, email, subject, message, phone } = req.body;
 
-    // Validation
     if (!name || !email || !subject || !message) {
       return res.status(400).json({
         success: false,
@@ -16,7 +12,6 @@ export const submitContactForm = async (req, res) => {
       });
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({
@@ -25,7 +20,6 @@ export const submitContactForm = async (req, res) => {
       });
     }
 
-    // Create contact submission
     const contact = await Contact.create({
       name,
       email,
@@ -34,7 +28,6 @@ export const submitContactForm = async (req, res) => {
       phone,
     });
 
-    // Send confirmation email to user
     try {
       await sendEmail({
         to: email,
@@ -78,10 +71,8 @@ export const submitContactForm = async (req, res) => {
       });
     } catch (emailError) {
       console.error("Error sending confirmation email:", emailError);
-      // Continue even if email fails
     }
 
-    // Send notification to admin
     try {
       const adminEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER;
       await sendEmail({
@@ -112,7 +103,11 @@ export const submitContactForm = async (req, res) => {
                 <div class="detail-row">
                   <span class="label">Email:</span> ${email}
                 </div>
-                ${phone ? `<div class="detail-row"><span class="label">Phone:</span> ${phone}</div>` : ""}
+                ${
+                  phone
+                    ? `<div class="detail-row"><span class="label">Phone:</span> ${phone}</div>`
+                    : ""
+                }
                 <div class="detail-row">
                   <span class="label">Subject:</span> ${subject}
                 </div>
@@ -134,7 +129,8 @@ export const submitContactForm = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Your message has been sent successfully! We'll get back to you soon.",
+      message:
+        "Your message has been sent successfully! We'll get back to you soon.",
       data: {
         id: contact._id,
         name: contact.name,
@@ -152,9 +148,6 @@ export const submitContactForm = async (req, res) => {
   }
 };
 
-// @desc    Get all contact submissions (Admin only)
-// @route   GET /api/contact
-// @access  Private/Admin
 export const getAllContacts = async (req, res) => {
   try {
     const { status, page = 1, limit = 10 } = req.query;
@@ -188,9 +181,6 @@ export const getAllContacts = async (req, res) => {
   }
 };
 
-// @desc    Get single contact by ID
-// @route   GET /api/contact/:id
-// @access  Private/Admin
 export const getContactById = async (req, res) => {
   try {
     const contact = await Contact.findById(req.params.id);
@@ -216,9 +206,6 @@ export const getContactById = async (req, res) => {
   }
 };
 
-// @desc    Update contact status
-// @route   PATCH /api/contact/:id
-// @access  Private/Admin
 export const updateContactStatus = async (req, res) => {
   try {
     const { status, response } = req.body;
@@ -259,9 +246,6 @@ export const updateContactStatus = async (req, res) => {
   }
 };
 
-// @desc    Delete contact
-// @route   DELETE /api/contact/:id
-// @access  Private/Admin
 export const deleteContact = async (req, res) => {
   try {
     const contact = await Contact.findById(req.params.id);
