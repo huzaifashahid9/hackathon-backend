@@ -6,6 +6,7 @@ export const addVitals = async (req, res) => {
   try {
     const {
       recordDate,
+      familyMemberId,
       bloodPressure,
       bloodSugar,
       weight,
@@ -17,16 +18,17 @@ export const addVitals = async (req, res) => {
       symptoms,
     } = req.body;
 
-    if (!recordDate) {
+    if (!recordDate || !familyMemberId) {
       return res.status(400).json({
         success: false,
-        message: "Record date is required",
+        message: "Record date and family member are required",
       });
     }
 
     // Create vitals record
     const vitals = await ManualVitals.create({
       userId: req.user.id,
+      familyMemberId,
       recordDate,
       bloodPressure,
       bloodSugar,
@@ -82,9 +84,13 @@ export const addVitals = async (req, res) => {
 
 export const getVitals = async (req, res) => {
   try {
-    const { startDate, endDate, limit = 50, page = 1 } = req.query;
+    const { startDate, endDate, familyMemberId, limit = 50, page = 1 } = req.query;
 
     const query = { userId: req.user.id };
+
+    if (familyMemberId) {
+      query.familyMemberId = familyMemberId;
+    }
 
     if (startDate || endDate) {
       query.recordDate = {};
@@ -95,6 +101,7 @@ export const getVitals = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const vitals = await ManualVitals.find(query)
+      .populate('familyMemberId', 'name relationship profileImage')
       .sort({ recordDate: -1 })
       .limit(parseInt(limit))
       .skip(skip);

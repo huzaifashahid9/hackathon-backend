@@ -95,7 +95,6 @@ File URL: ${fileUrl}
 
     console.log("📤 Sending request to Gemini API...");
 
-    
     const result = await model.generateContent(prompt);
 
     console.log("📥 Received response from Gemini");
@@ -105,12 +104,9 @@ File URL: ${fileUrl}
     console.log("📄 Response text length:", text.length);
     console.log("📄 First 200 chars:", text.substring(0, 200));
 
-    
     try {
-      
       let jsonText = text.trim();
 
-     
       jsonText = jsonText.replace(/```json\s*/g, "");
       jsonText = jsonText.replace(/```\s*/g, "");
 
@@ -151,7 +147,6 @@ File URL: ${fileUrl}
       console.error("❌ JSON parse error:", parseError.message);
       console.log("📄 Raw text that failed to parse:", text.substring(0, 500));
 
-      
       return {
         success: true,
         data: {
@@ -193,11 +188,16 @@ export const generateVitalsInsights = async (vitalsData) => {
 
     // Build vitals summary text
     let vitalsText = "User's Health Vitals:\n\n";
-    if (vitalsData.bloodPressure?.systolic && vitalsData.bloodPressure?.diastolic) {
+    if (
+      vitalsData.bloodPressure?.systolic &&
+      vitalsData.bloodPressure?.diastolic
+    ) {
       vitalsText += `Blood Pressure: ${vitalsData.bloodPressure.systolic}/${vitalsData.bloodPressure.diastolic} mmHg\n`;
     }
     if (vitalsData.bloodSugar?.value) {
-      vitalsText += `Blood Sugar (${vitalsData.bloodSugar.type || "random"}): ${vitalsData.bloodSugar.value} mg/dL\n`;
+      vitalsText += `Blood Sugar (${vitalsData.bloodSugar.type || "random"}): ${
+        vitalsData.bloodSugar.value
+      } mg/dL\n`;
     }
     if (vitalsData.weight?.value) {
       vitalsText += `Weight: ${vitalsData.weight.value} ${vitalsData.weight.unit}\n`;
@@ -209,7 +209,9 @@ export const generateVitalsInsights = async (vitalsData) => {
       vitalsText += `Heart Rate: ${vitalsData.heartRate.value} bpm\n`;
     }
     if (vitalsData.temperature?.value) {
-      vitalsText += `Temperature: ${vitalsData.temperature.value}°${vitalsData.temperature.unit === "celsius" ? "C" : "F"}\n`;
+      vitalsText += `Temperature: ${vitalsData.temperature.value}°${
+        vitalsData.temperature.unit === "celsius" ? "C" : "F"
+      }\n`;
     }
     if (vitalsData.oxygenLevel?.value) {
       vitalsText += `Oxygen Level: ${vitalsData.oxygenLevel.value}%\n`;

@@ -8,6 +8,12 @@ const manualVitalsSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    familyMemberId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FamilyMember",
+      required: true,
+      index: true,
+    },
     recordDate: {
       type: Date,
       required: [true, "Record date is required"],
@@ -150,6 +156,7 @@ const manualVitalsSchema = new mongoose.Schema(
 );
 
 manualVitalsSchema.index({ userId: 1, recordDate: -1 });
+manualVitalsSchema.index({ familyMemberId: 1, recordDate: -1 });
 
 manualVitalsSchema.virtual("bmi").get(function () {
   if (this.weight?.value && this.height?.value) {

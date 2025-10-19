@@ -11,12 +11,12 @@ export const uploadReport = async (req, res) => {
       });
     }
 
-    const { title, reportType, reportDate, notes } = req.body;
+    const { title, reportType, reportDate, notes, familyMemberId } = req.body;
 
-    if (!title || !reportType || !reportDate) {
+    if (!title || !reportType || !reportDate || !familyMemberId) {
       return res.status(400).json({
         success: false,
-        message: "Please provide title, report type, and report date",
+        message: "Please provide title, report type, report date, and family member",
       });
     }
 
@@ -31,6 +31,7 @@ export const uploadReport = async (req, res) => {
 
     const report = await Report.create({
       userId: req.user.id,
+      familyMemberId,
       title,
       reportType,
       reportDate,
@@ -112,9 +113,13 @@ const processReportWithAI = async (reportId, fileUrl, reportType) => {
 
 export const getReports = async (req, res) => {
   try {
-    const { reportType, startDate, endDate, limit = 50, page = 1 } = req.query;
+    const { reportType, startDate, endDate, familyMemberId, limit = 50, page = 1 } = req.query;
 
     const query = { userId: req.user.id };
+
+    if (familyMemberId) {
+      query.familyMemberId = familyMemberId;
+    }
 
     if (reportType) {
       query.reportType = reportType;
@@ -129,6 +134,7 @@ export const getReports = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const reports = await Report.find(query)
+      .populate('familyMemberId', 'name relationship profileImage')
       .sort({ reportDate: -1 })
       .limit(parseInt(limit))
       .skip(skip);

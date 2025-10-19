@@ -9,6 +9,7 @@ import authRoutes from "./src/routes/authRoutes.js";
 import reportRoutes from "./src/routes/reportRoutes.js";
 import vitalsRoutes from "./src/routes/vitalsRoutes.js";
 import contactRoutes from "./src/routes/contactRoutes.js";
+import familyMemberRoutes from "./src/routes/familyMemberRoutes.js";
 
 const app = express();
 
@@ -46,7 +47,8 @@ app.get("/", (req, res) => {
       auth: "/api/auth",
       reports: "/api/reports",
       vitals: "/api/vitals",
-      contact: "/api/contact"
+      contact: "/api/contact",
+      familyMembers: "/api/family-members"
     }
   });
 });
@@ -56,6 +58,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/vitals", vitalsRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/family-members", familyMemberRoutes);
 
 // 404 handler
 app.use((req, res) => {
